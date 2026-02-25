@@ -9,17 +9,20 @@
 # Usage:
 #   ./record-pack.sh mypack
 #   ./record-pack.sh mypack --retake error   # Re-record a single event
+#   ./record-pack.sh mypack --add stop       # Add a variant for random selection
 
 set -e
 
 HERALD_DIR="$(cd "$(dirname "$0")" && pwd)"
-PACK_NAME="${1:?Usage: ./record-pack.sh <pack-name> [--retake <event>]}"
+PACK_NAME="${1:?Usage: ./record-pack.sh <pack-name> [--retake <event>] [--add <event>]}"
 shift
 
 RETAKE=""
+ADD=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --retake) RETAKE="$2"; shift 2 ;;
+        --add)    ADD="$2"; shift 2 ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -134,7 +137,30 @@ TOOL_EVENTS=(
 )
 
 # --- Record events ---
-if [ -n "$RETAKE" ]; then
+if [ -n "$ADD" ]; then
+    # Add a variant for an event
+    found=0
+    for entry in "${EVENTS[@]}" "${TOOL_EVENTS[@]}"; do
+        IFS='|' read -r label filename suggestion <<< "$entry"
+        if [ "$label" = "$ADD" ] || [ "$(echo "$label" | tr '[:upper:]' '[:lower:]' | tr ' ' '_')" = "$ADD" ]; then
+            # Find next available number
+            base_path="$PACK_DIR/${filename%.wav}"
+            n=1
+            while [ -f "${base_path}_${n}.wav" ]; do
+                ((n++))
+            done
+            variant_path="${base_path}_${n}.wav"
+            echo "Adding variant #$((n+1)) for $label"
+            record_sound "$label (variant #$((n+1)))" "$(basename "$variant_path")" "$suggestion" "$variant_path"
+            found=1
+            break
+        fi
+    done
+    if [ "$found" -eq 0 ]; then
+        echo "Event '$ADD' not found."
+        exit 1
+    fi
+elif [ -n "$RETAKE" ]; then
     # Re-record a single event
     found=0
     for entry in "${EVENTS[@]}" "${TOOL_EVENTS[@]}"; do

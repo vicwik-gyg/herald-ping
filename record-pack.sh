@@ -10,6 +10,7 @@
 #   ./record-pack.sh mypack
 #   ./record-pack.sh mypack --retake error   # Re-record a single event
 #   ./record-pack.sh mypack --add stop       # Add a variant for random selection
+#   ./record-pack.sh mypack --add-all        # Add a variant for every event
 
 set -e
 
@@ -19,10 +20,12 @@ shift
 
 RETAKE=""
 ADD=""
+ADD_ALL=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --retake) RETAKE="$2"; shift 2 ;;
-        --add)    ADD="$2"; shift 2 ;;
+        --retake)  RETAKE="$2"; shift 2 ;;
+        --add)     ADD="$2"; shift 2 ;;
+        --add-all) ADD_ALL=1; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -136,22 +139,42 @@ TOOL_EVENTS=(
     "Task|sounds/tools/task.wav|Delegating."
 )
 
+# --- Helper: record a variant for an event entry ---
+record_variant() {
+    local entry="$1"
+    IFS='|' read -r label filename suggestion <<< "$entry"
+    base_path="$PACK_DIR/${filename%.wav}"
+    n=1
+    while [ -f "${base_path}_${n}.wav" ]; do
+        ((n++))
+    done
+    variant_path="${base_path}_${n}.wav"
+    echo "Adding variant #$((n+1)) for $label"
+    record_sound "$label (variant #$((n+1)))" "$(basename "$variant_path")" "$suggestion" "$variant_path" || true
+}
+
 # --- Record events ---
-if [ -n "$ADD" ]; then
-    # Add a variant for an event
+if [ "$ADD_ALL" -eq 1 ]; then
+    # Add a variant for every event
+    echo "=== Adding variants for event sounds ==="
+    echo ""
+    for entry in "${EVENTS[@]}"; do
+        record_variant "$entry"
+    done
+
+    echo ""
+    echo "=== Adding variants for tool sounds ==="
+    echo ""
+    for entry in "${TOOL_EVENTS[@]}"; do
+        record_variant "$entry"
+    done
+elif [ -n "$ADD" ]; then
+    # Add a variant for a single event
     found=0
     for entry in "${EVENTS[@]}" "${TOOL_EVENTS[@]}"; do
         IFS='|' read -r label filename suggestion <<< "$entry"
         if [ "$label" = "$ADD" ] || [ "$(echo "$label" | tr '[:upper:]' '[:lower:]' | tr ' ' '_')" = "$ADD" ]; then
-            # Find next available number
-            base_path="$PACK_DIR/${filename%.wav}"
-            n=1
-            while [ -f "${base_path}_${n}.wav" ]; do
-                ((n++))
-            done
-            variant_path="${base_path}_${n}.wav"
-            echo "Adding variant #$((n+1)) for $label"
-            record_sound "$label (variant #$((n+1)))" "$(basename "$variant_path")" "$suggestion" "$variant_path"
+            record_variant "$entry"
             found=1
             break
         fi

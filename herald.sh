@@ -192,9 +192,7 @@ fi
 
 # --- Play sound (non-blocking) ---
 if command -v afplay &>/dev/null; then
-    afplay_vol=$(echo "$volume * 255" | bc 2>/dev/null | cut -d. -f1)
-    afplay_vol="${afplay_vol:-128}"
-    afplay -v "$afplay_vol" "$sound_path" &>/dev/null &
+    afplay -v "${volume:-0.5}" "$sound_path" &>/dev/null &
     echo $! > "$PID_FILE"
 elif command -v paplay &>/dev/null; then
     paplay "$sound_path" &>/dev/null &

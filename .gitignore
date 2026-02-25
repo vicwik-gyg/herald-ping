@@ -1,0 +1,9 @@
+# Generated sound files (user-specific, regenerated on install)
+packs/*/sounds/
+
+# Runtime state
+.state.json
+.sound.pid
+
+# Backups
+*.backup

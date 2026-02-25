@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "volume": 0.5,
+  "active_pack": "default",
+  "events": {
+    "session_start": true,
+    "session_end": true,
+    "attention": true,
+    "error": true,
+    "tool_start": false,
+    "tool_end": false
+  }
+}

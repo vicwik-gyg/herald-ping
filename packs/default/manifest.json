@@ -1,0 +1,12 @@
+{
+  "name": "default",
+  "description": "Built-in TTS pack using macOS say command",
+  "sounds": {
+    "session_start": ["sounds/session_start.aiff"],
+    "session_end": ["sounds/session_end.aiff"],
+    "attention": ["sounds/attention.aiff"],
+    "error": ["sounds/error.aiff"],
+    "tool_start": ["sounds/tool_start.aiff"],
+    "tool_end": ["sounds/tool_end.aiff"]
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "name": "vicwik",
+  "description": "Voice-recorded pack",
+  "sounds": {
+    "session_start": [
+      "sounds/session_start.wav"
+    ],
+    "session_end": [
+      "sounds/session_end.wav"
+    ],
+    "prompt_start": [
+      "sounds/prompt_start.wav"
+    ],
+    "stop": [
+      "sounds/stop.wav"
+    ],
+    "attention": [
+      "sounds/attention.wav"
+    ],
+    "permission": [
+      "sounds/permission.wav"
+    ],
+    "error": [
+      "sounds/error.wav"
+    ],
+    "context_warning": [
+      "sounds/context_warning.wav"
+    ],
+    "tool_start": [
+      "sounds/tool_start.wav"
+    ],
+    "tool_end": [
+      "sounds/tool_end.wav"
+    ],
+    "subagent_start": [
+      "sounds/subagent_start.wav"
+    ],
+    "subagent_stop": [
+      "sounds/subagent_stop.wav"
+    ],
+    "tools": {
+      "Bash": [
+        "sounds/tools/bash.wav"
+      ],
+      "Read": [
+        "sounds/tools/read.wav"
+      ],
+      "Write": [
+        "sounds/tools/write.wav"
+      ],
+      "Edit": [
+        "sounds/tools/edit.wav"
+      ],
+      "Grep": [
+        "sounds/tools/search.wav"
+      ],
+      "Glob": [
+        "sounds/tools/search.wav"
+      ],
+      "WebFetch": [
+        "sounds/tools/web.wav"
+      ],
+      "Task": [
+        "sounds/tools/task.wav"
+      ]
+    }
+  }
+}

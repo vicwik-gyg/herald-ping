@@ -1,7 +1,7 @@
 {
   "enabled": true,
   "volume": 0.5,
-  "active_pack": "default",
+  "active_pack": "vicwik",
   "events": {
     "session_start": true,
     "session_end": true,

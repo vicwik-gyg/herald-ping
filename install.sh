@@ -82,10 +82,10 @@ jq --arg script "$HERALD_SCRIPT" '
     [{"hooks": [{"type": "command", "command": ("CLAUDE_HOOK_EVENT=SessionEnd " + $script)}]}]
   ) |
 
-  # PreToolUse - AskUserQuestion (attention)
+  # PreToolUse - all tools (tool-specific sounds + attention for AskUserQuestion)
   .hooks.PreToolUse = (
     [(.hooks.PreToolUse // [])[] | select(.hooks[0].command | test("herald\\.sh") | not)] +
-    [{"matcher": "AskUserQuestion", "hooks": [{"type": "command", "command": ("CLAUDE_HOOK_EVENT=PreToolUse " + $script)}]}]
+    [{"hooks": [{"type": "command", "command": ("CLAUDE_HOOK_EVENT=PreToolUse " + $script)}]}]
   ) |
 
   # PostToolUse - all tools (completion/error)

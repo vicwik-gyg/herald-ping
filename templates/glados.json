@@ -1,0 +1,60 @@
+{
+  "voice": "Samantha",
+  "phrases": {
+    "session_start": [
+      "Oh, it's you.",
+      "Welcome back. I guess."
+    ],
+    "session_end": [
+      "Goodbye. For now.",
+      "I'll be here. Waiting."
+    ],
+    "attention": [
+      "I need your input. Try not to disappoint me.",
+      "A decision is required. Choose wisely."
+    ],
+    "error": [
+      "Well, that was a spectacular failure.",
+      "Something broke. Probably your fault."
+    ],
+    "tool_start": [
+      "Processing."
+    ],
+    "tool_end": [
+      "Complete."
+    ],
+    "tools": {
+      "Bash": [
+        "Running your little command.",
+        "Executing."
+      ],
+      "Read": [
+        "Let me read that for you.",
+        "Accessing file."
+      ],
+      "Write": [
+        "Writing to disk. How permanent.",
+        "Creating file."
+      ],
+      "Edit": [
+        "Making modifications.",
+        "Adjusting."
+      ],
+      "Grep": [
+        "Searching. Like a needle in a haystack.",
+        "Looking."
+      ],
+      "Glob": [
+        "Scanning files."
+      ],
+      "WebFetch": [
+        "Reaching out to the internet. How social.",
+        "Fetching remote data."
+      ],
+      "Task": [
+        "Delegating to a subagent. Management.",
+        "Spawning a worker."
+      ]
+    }
+  }
+}

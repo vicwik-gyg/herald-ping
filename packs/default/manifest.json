@@ -7,6 +7,16 @@
     "attention": ["sounds/attention.aiff"],
     "error": ["sounds/error.aiff"],
     "tool_start": ["sounds/tool_start.aiff"],
-    "tool_end": ["sounds/tool_end.aiff"]
+    "tool_end": ["sounds/tool_end.aiff"],
+    "tools": {
+      "Bash": ["sounds/tools/bash.aiff"],
+      "Read": ["sounds/tools/read.aiff"],
+      "Write": ["sounds/tools/write.aiff"],
+      "Edit": ["sounds/tools/edit.aiff"],
+      "Grep": ["sounds/tools/search.aiff"],
+      "Glob": ["sounds/tools/search.aiff"],
+      "WebFetch": ["sounds/tools/web.aiff"],
+      "Task": ["sounds/tools/task.aiff"]
+    }
   }
 }

@@ -4,17 +4,22 @@
 # Plays context-appropriate sounds when Claude Code events fire.
 # Designed to be registered as a Claude Code hook script.
 #
-# Hook events and their herald categories:
+# Sound resolution order (first match wins):
+#   1. Tool-specific sound  (e.g., sounds.tools.Bash)
+#   2. Event category sound (e.g., sounds.session_start, sounds.error)
+#
+# Hook events:
 #   SessionStart                    -> session_start
 #   SessionEnd                      -> session_end
-#   PreToolUse[AskUserQuestion]     -> attention
-#   PostToolUse (exit_code != 0)    -> error
-#   PreToolUse  (general)           -> tool_start
-#   PostToolUse (general)           -> tool_end
+#   PreToolUse[AskUserQuestion]     -> attention  (+ tool: AskUserQuestion)
+#   PreToolUse[*]                   -> tool_start (+ tool: Read, Bash, etc.)
+#   PostToolUse (error)             -> error      (+ tool name)
+#   PostToolUse (success)           -> tool_end   (+ tool name)
 #
-# Environment variables (set by Claude Code):
+# Environment variables:
 #   HERALD_PING_DIR   - Override install directory
 #   HERALD_EVENT      - Override event category (for testing)
+#   HERALD_TOOL       - Override tool name (for testing)
 #
 # Exit codes:
 #   0 = Success (hook passes through, never blocks)
@@ -24,7 +29,6 @@ set -e
 # --- Resolve paths ---
 HERALD_DIR="${HERALD_PING_DIR:-$(cd "$(dirname "$0")" && pwd)}"
 CONFIG_FILE="$HERALD_DIR/config.json"
-STATE_FILE="$HERALD_DIR/.state.json"
 
 # --- Read config ---
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -39,35 +43,29 @@ fi
 volume=$(jq -r '.volume // 0.5' "$CONFIG_FILE")
 active_pack=$(jq -r '.active_pack // "default"' "$CONFIG_FILE")
 
-# --- Determine event category ---
+# --- Parse hook input and resolve event + tool_name ---
+# Outputs two lines: event_category and tool_name
 resolve_event() {
-    # Allow manual override for testing
     if [ -n "$HERALD_EVENT" ]; then
         echo "$HERALD_EVENT"
+        echo "${HERALD_TOOL:-}"
         return
     fi
 
-    # Read hook input from stdin
     local input
     input=$(cat)
 
-    # Detect hook type from environment or input structure
     local hook_event="${CLAUDE_HOOK_EVENT:-}"
+    local tool_name
+    tool_name=$(echo "$input" | jq -r '.tool_name // empty' 2>/dev/null)
 
-    # If no explicit hook event, infer from input structure
     if [ -z "$hook_event" ]; then
-        # Check if input has tool_name (PreToolUse/PostToolUse)
-        local tool_name
-        tool_name=$(echo "$input" | jq -r '.tool_name // empty' 2>/dev/null)
-        local tool_input_keys
-        tool_input_keys=$(echo "$input" | jq -r '.tool_input // empty' 2>/dev/null)
-
+        # Infer hook type from input structure
         if [ -n "$tool_name" ]; then
-            # Check for error in PostToolUse
-            local exit_code
-            exit_code=$(echo "$input" | jq -r '.tool_result.exit_code // empty' 2>/dev/null)
             local is_error
             is_error=$(echo "$input" | jq -r '.tool_result.is_error // false' 2>/dev/null)
+            local exit_code
+            exit_code=$(echo "$input" | jq -r '.tool_result.exit_code // empty' 2>/dev/null)
 
             if [ -n "$exit_code" ] || [ "$is_error" = "true" ]; then
                 # PostToolUse
@@ -85,7 +83,6 @@ resolve_event() {
                 fi
             fi
         else
-            # SessionStart or SessionEnd (no tool_name)
             local source
             source=$(echo "$input" | jq -r '.source // empty' 2>/dev/null)
             if [ -n "$source" ]; then
@@ -98,14 +95,25 @@ resolve_event() {
         case "$hook_event" in
             SessionStart)  echo "session_start" ;;
             SessionEnd)    echo "session_end" ;;
-            PreToolUse)    echo "tool_start" ;;
+            PreToolUse)
+                if [ "$tool_name" = "AskUserQuestion" ]; then
+                    echo "attention"
+                else
+                    echo "tool_start"
+                fi
+                ;;
             PostToolUse)   echo "tool_end" ;;
             *)             echo "tool_end" ;;
         esac
     fi
+
+    echo "$tool_name"
 }
 
-event=$(resolve_event)
+# Read both event and tool_name
+read_output=$(resolve_event)
+event=$(echo "$read_output" | head -1)
+tool_name=$(echo "$read_output" | tail -1)
 
 # --- Check if event is enabled ---
 event_enabled=$(jq -r ".events.${event} // false" "$CONFIG_FILE")
@@ -121,14 +129,33 @@ if [ ! -f "$MANIFEST" ]; then
     exit 0
 fi
 
-# Get array of sound files for this event, pick one at random
-sound_count=$(jq -r ".sounds.${event} | length" "$MANIFEST")
-if [ "$sound_count" -eq 0 ] || [ "$sound_count" = "null" ]; then
+# Sound resolution: tool-specific first, then event category fallback
+sound_key=""
+
+# 1. Try tool-specific sound (e.g., .sounds.tools.Bash)
+if [ -n "$tool_name" ]; then
+    tool_count=$(jq -r ".sounds.tools.\"${tool_name}\" | length // 0" "$MANIFEST" 2>/dev/null)
+    if [ -n "$tool_count" ] && [ "$tool_count" != "null" ] && [ "$tool_count" -gt 0 ] 2>/dev/null; then
+        sound_key="tools.\"${tool_name}\""
+    fi
+fi
+
+# 2. Fallback to event category (e.g., .sounds.session_start)
+if [ -z "$sound_key" ]; then
+    cat_count=$(jq -r ".sounds.${event} | length // 0" "$MANIFEST" 2>/dev/null)
+    if [ -n "$cat_count" ] && [ "$cat_count" != "null" ] && [ "$cat_count" -gt 0 ] 2>/dev/null; then
+        sound_key="${event}"
+    fi
+fi
+
+if [ -z "$sound_key" ]; then
     exit 0
 fi
 
+# Pick a random sound from the array
+sound_count=$(jq -r ".sounds.${sound_key} | length" "$MANIFEST")
 random_index=$((RANDOM % sound_count))
-sound_file=$(jq -r ".sounds.${event}[$random_index]" "$MANIFEST")
+sound_file=$(jq -r ".sounds.${sound_key}[$random_index]" "$MANIFEST")
 sound_path="$PACK_DIR/$sound_file"
 
 if [ ! -f "$sound_path" ]; then
@@ -136,12 +163,10 @@ if [ ! -f "$sound_path" ]; then
 fi
 
 # --- Play sound (non-blocking) ---
-# macOS: afplay with volume (0.0-1.0 mapped to afplay's 0-255)
 if command -v afplay &>/dev/null; then
     afplay_vol=$(echo "$volume * 255" | bc 2>/dev/null | cut -d. -f1)
     afplay_vol="${afplay_vol:-128}"
     afplay -v "$afplay_vol" "$sound_path" &>/dev/null &
-# Linux: paplay or aplay fallback
 elif command -v paplay &>/dev/null; then
     paplay "$sound_path" &>/dev/null &
 elif command -v aplay &>/dev/null; then

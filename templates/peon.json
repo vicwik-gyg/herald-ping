@@ -1,0 +1,61 @@
+{
+  "voice": "Fred",
+  "phrases": {
+    "session_start": [
+      "Ready to work.",
+      "What you want?"
+    ],
+    "session_end": [
+      "Work work.",
+      "Off I go then."
+    ],
+    "attention": [
+      "Something need doing?",
+      "Me not that kind of orc!"
+    ],
+    "error": [
+      "That not work!",
+      "Me so confused."
+    ],
+    "tool_start": [
+      "Right away."
+    ],
+    "tool_end": [
+      "Work complete.",
+      "Done."
+    ],
+    "tools": {
+      "Bash": [
+        "Chopping command.",
+        "Zug zug."
+      ],
+      "Read": [
+        "Me look at that.",
+        "Reading orders."
+      ],
+      "Write": [
+        "Me write it down.",
+        "Scribbling."
+      ],
+      "Edit": [
+        "Fixing.",
+        "Me change it."
+      ],
+      "Grep": [
+        "Searching, searching.",
+        "Looking for shinies."
+      ],
+      "Glob": [
+        "Scanning."
+      ],
+      "WebFetch": [
+        "Going far away to fetch.",
+        "Long trip."
+      ],
+      "Task": [
+        "More work?",
+        "Me get someone."
+      ]
+    }
+  }
+}

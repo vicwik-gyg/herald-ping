@@ -182,6 +182,12 @@ Record your own voice lines for each event. Requires `sox` (`brew install sox`).
 
 # Re-record a single event
 ./record-pack.sh my-pack --retake stop
+
+# Add a variant for a single event (for random selection)
+./record-pack.sh my-pack --add stop
+
+# Add variants for all events at once
+./record-pack.sh my-pack --add-all
 ```
 
 The script:
@@ -190,6 +196,8 @@ The script:
 - Auto-trims silence from start and end
 - Lets you redo or skip any event
 - Builds the manifest automatically
+
+Use `--add` / `--add-all` to record additional variants for events that already have a sound. When multiple files exist for one event, one is picked at random each time.
 
 ### Method 2: Add audio files manually
 

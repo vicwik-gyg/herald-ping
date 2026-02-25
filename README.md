@@ -2,12 +2,21 @@
 
 Local sound notifications for Claude Code. No external dependencies, no network calls, no telemetry.
 
-Plays audio cues when your AI agent needs attention, hits an error, finishes work, or uses a specific tool.
+Plays audio cues when your AI agent needs attention, hits an error, finishes work, or uses a specific tool. Fully customizable with your own voice recordings, game clips, or any audio files.
+
+## Prerequisites
+
+- **Claude Code** — installed and run at least once (`~/.claude/settings.json` must exist)
+- **jq** — JSON processor (`brew install jq`)
+- **macOS** or **Linux** (macOS has the best support for all features)
+
+Optional:
+- **sox** — only needed for microphone recording (`brew install sox`)
 
 ## Install
 
 ```bash
-git clone <this-repo> ~/git/herald-ping
+git clone https://github.com/vicwik/herald-ping.git ~/git/herald-ping
 cd ~/git/herald-ping
 ./install.sh
 ```
@@ -16,13 +25,28 @@ This will:
 1. Generate default sounds using macOS TTS (`say` command)
 2. Register hooks in `~/.claude/settings.json`
 
-Restart Claude Code for hooks to take effect.
+**Restart Claude Code** for hooks to take effect.
 
 ### Options
 
 ```bash
 ./install.sh --voice Samantha    # Use a different macOS voice
 ./install.sh --uninstall         # Remove hooks
+```
+
+### Verify it's working
+
+After restarting Claude Code, you should hear "At your service." If not:
+
+```bash
+# Test manually — should play a sound
+echo '{}' | HERALD_EVENT=session_start ~/git/herald-ping/herald.sh
+
+# Check hooks are registered
+jq '.hooks | keys' ~/.claude/settings.json
+
+# Check config
+jq '.' ~/git/herald-ping/config.json
 ```
 
 ## How it works
@@ -255,6 +279,84 @@ Use macOS text-to-speech to generate voice lines from text phrases.
     }
   }
 }
+```
+
+---
+
+## Extending herald-ping
+
+### Adding sounds for new Claude Code tools
+
+The built-in tool list (Bash, Read, Write, Edit, Grep, Glob, WebFetch, Task) is not hardcoded in `herald.sh` — it reads whatever tool names are in your manifest. To add sounds for any Claude Code tool:
+
+1. Add the audio file to your pack
+2. Add the tool name to your `manifest.json` under `sounds.tools`:
+
+```json
+"tools": {
+  "NotebookEdit": ["sounds/tools/notebook.wav"],
+  "mcp__slack__send_message": ["sounds/tools/slack.wav"]
+}
+```
+
+The tool name must match exactly what Claude Code reports in its hook data (case-sensitive).
+
+### Adding new event categories
+
+If Claude Code adds new hook events in the future:
+
+1. Add the event mapping in `herald.sh` (in the `case` statement)
+2. Add the new category to `config.json`
+3. Add sound files and manifest entries in your pack
+
+### Sharing packs
+
+Packs are self-contained directories. To share one:
+
+1. Create the pack with audio files and manifest
+2. Commit the pack directory (audio files included) to a branch or fork
+3. Others copy it into their `packs/` directory and set `active_pack`
+
+Since sound files are gitignored by default, you'll need to force-add them for a shared pack:
+
+```bash
+git add -f packs/my-shared-pack/
+```
+
+Or create a separate repo just for the pack.
+
+---
+
+## Troubleshooting
+
+### No sound plays
+
+1. **Check jq is installed:** `jq --version` — if missing, `brew install jq`
+2. **Check hooks are registered:** `jq '.hooks | keys' ~/.claude/settings.json` — should list 11 events
+3. **Check the pack has sounds:** `ls packs/default/sounds/` — should have `.aiff` files
+4. **Check config:** `jq '.enabled' config.json` — should be `true`
+5. **Test manually:** `echo '{}' | HERALD_EVENT=stop ~/git/herald-ping/herald.sh`
+6. **Check volume:** macOS system volume must be non-zero, and `config.json` volume > 0
+
+### Sounds play but too quiet / too loud
+
+Edit `config.json` — `volume` ranges from `0.0` (silent) to `1.0` (max).
+
+### Sounds overlap
+
+They shouldn't — herald-ping skips new sounds while one is playing. If you're hearing overlap, check that you don't have both herald-ping AND another notification tool (e.g., peon-ping) installed. Run `jq '.hooks' ~/.claude/settings.json` to check.
+
+### Microphone recording doesn't work
+
+1. **Check sox:** `rec --version` — if missing, `brew install sox`
+2. **Check permissions:** macOS may need microphone access for Terminal/iTerm. Go to System Settings > Privacy & Security > Microphone and enable your terminal app.
+
+### Install modified wrong settings file
+
+The installer backs up your settings before patching. Restore with:
+
+```bash
+cp ~/.claude/settings.json.herald-backup ~/.claude/settings.json
 ```
 
 ---

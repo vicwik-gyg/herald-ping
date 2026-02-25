@@ -2,19 +2,25 @@
 # herald-ping: Local sound notification hook for Claude Code.
 #
 # Plays context-appropriate sounds when Claude Code events fire.
-# Designed to be registered as a Claude Code hook script.
+# Registered for all Claude Code hook events via install.sh.
 #
 # Sound resolution order (first match wins):
 #   1. Tool-specific sound  (e.g., sounds.tools.Bash)
 #   2. Event category sound (e.g., sounds.session_start, sounds.error)
 #
-# Hook events:
-#   SessionStart                    -> session_start
-#   SessionEnd                      -> session_end
-#   PreToolUse[AskUserQuestion]     -> attention  (+ tool: AskUserQuestion)
-#   PreToolUse[*]                   -> tool_start (+ tool: Read, Bash, etc.)
-#   PostToolUse (error)             -> error      (+ tool name)
-#   PostToolUse (success)           -> tool_end   (+ tool name)
+# Event categories:
+#   session_start    SessionStart                     - session begins
+#   session_end      SessionEnd                       - session ends
+#   prompt_start     UserPromptSubmit                 - user sends a prompt, work begins
+#   permission       Notification[permission]         - waiting for permission approval
+#   attention        PreToolUse[AskUserQuestion]      - Claude asks the user a question
+#   tool_start       PreToolUse[*]                    - before a tool runs (per-tool sounds)
+#   tool_end         PostToolUse                      - tool completed successfully
+#   error            PostToolUseFailure               - tool failed
+#   stop             Stop                             - Claude finished, waiting for input
+#   context_warning  PreCompact                       - context window full, compacting
+#   subagent_start   SubagentStart                    - spawned a subagent
+#   subagent_stop    SubagentStop                     - subagent finished
 #
 # Environment variables:
 #   HERALD_PING_DIR   - Override install directory
@@ -44,7 +50,6 @@ volume=$(jq -r '.volume // 0.5' "$CONFIG_FILE")
 active_pack=$(jq -r '.active_pack // "default"' "$CONFIG_FILE")
 
 # --- Parse hook input and resolve event + tool_name ---
-# Outputs two lines: event_category and tool_name
 resolve_event() {
     if [ -n "$HERALD_EVENT" ]; then
         echo "$HERALD_EVENT"
@@ -59,53 +64,66 @@ resolve_event() {
     local tool_name
     tool_name=$(echo "$input" | jq -r '.tool_name // empty' 2>/dev/null)
 
-    if [ -z "$hook_event" ]; then
-        # Infer hook type from input structure
-        if [ -n "$tool_name" ]; then
-            local is_error
-            is_error=$(echo "$input" | jq -r '.tool_result.is_error // false' 2>/dev/null)
-            local exit_code
-            exit_code=$(echo "$input" | jq -r '.tool_result.exit_code // empty' 2>/dev/null)
-
-            if [ -n "$exit_code" ] || [ "$is_error" = "true" ]; then
-                # PostToolUse
-                if [ "$is_error" = "true" ] || { [ -n "$exit_code" ] && [ "$exit_code" != "0" ]; }; then
+    case "$hook_event" in
+        SessionStart)
+            echo "session_start"
+            ;;
+        SessionEnd)
+            echo "session_end"
+            ;;
+        UserPromptSubmit)
+            echo "prompt_start"
+            ;;
+        Notification)
+            # Check notification type for permission prompts
+            local notif_type
+            notif_type=$(echo "$input" | jq -r '.notification_type // empty' 2>/dev/null)
+            if [ "$notif_type" = "permission_prompt" ]; then
+                echo "permission"
+            else
+                echo "attention"
+            fi
+            ;;
+        PreToolUse)
+            if [ "$tool_name" = "AskUserQuestion" ]; then
+                echo "attention"
+            else
+                echo "tool_start"
+            fi
+            ;;
+        PostToolUse)
+            echo "tool_end"
+            ;;
+        PostToolUseFailure)
+            echo "error"
+            ;;
+        Stop)
+            echo "stop"
+            ;;
+        PreCompact)
+            echo "context_warning"
+            ;;
+        SubagentStart)
+            echo "subagent_start"
+            ;;
+        SubagentStop)
+            echo "subagent_stop"
+            ;;
+        *)
+            # Fallback: try to infer from input structure
+            if [ -n "$tool_name" ]; then
+                local is_error
+                is_error=$(echo "$input" | jq -r '.tool_result.is_error // false' 2>/dev/null)
+                if [ "$is_error" = "true" ]; then
                     echo "error"
                 else
                     echo "tool_end"
                 fi
             else
-                # PreToolUse
-                if [ "$tool_name" = "AskUserQuestion" ]; then
-                    echo "attention"
-                else
-                    echo "tool_start"
-                fi
+                exit 0
             fi
-        else
-            local source
-            source=$(echo "$input" | jq -r '.source // empty' 2>/dev/null)
-            if [ -n "$source" ]; then
-                echo "session_start"
-            else
-                echo "session_end"
-            fi
-        fi
-    else
-        case "$hook_event" in
-            SessionStart)  echo "session_start" ;;
-            SessionEnd)    echo "session_end" ;;
-            PreToolUse)
-                if [ "$tool_name" = "AskUserQuestion" ]; then
-                    echo "attention"
-                else
-                    echo "tool_start"
-                fi
-                ;;
-            PostToolUse)   echo "tool_end" ;;
-            *)             echo "tool_end" ;;
-        esac
-    fi
+            ;;
+    esac
 
     echo "$tool_name"
 }

@@ -5,9 +5,15 @@
   "events": {
     "session_start": true,
     "session_end": true,
+    "prompt_start": false,
+    "permission": true,
     "attention": true,
-    "error": true,
     "tool_start": false,
-    "tool_end": false
+    "tool_end": false,
+    "error": true,
+    "stop": true,
+    "context_warning": true,
+    "subagent_start": false,
+    "subagent_stop": false
   }
 }

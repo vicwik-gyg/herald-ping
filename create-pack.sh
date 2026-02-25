@@ -114,7 +114,7 @@ if [ -n "$TEMPLATE" ] && [ -f "$TEMPLATE" ]; then
     echo "Generating sounds..."
 
     # Event categories
-    for event in session_start session_end attention error tool_start tool_end; do
+    for event in session_start session_end prompt_start stop attention permission error context_warning tool_start tool_end subagent_start subagent_stop; do
         generate_from_template "$event" "$SOUNDS_DIR/${event}.aiff"
     done
 
@@ -160,11 +160,23 @@ else
         done
     }
 
-    echo "Event sounds:"
-    prompt_and_generate "session_start" "$SOUNDS_DIR/session_start.aiff" "At your service."
-    prompt_and_generate "session_end"   "$SOUNDS_DIR/session_end.aiff"   "Will that be all?"
-    prompt_and_generate "attention"     "$SOUNDS_DIR/attention.aiff"     "Pardon the interruption."
-    prompt_and_generate "error"         "$SOUNDS_DIR/error.aiff"         "Something went wrong."
+    echo "Session lifecycle:"
+    prompt_and_generate "session_start"    "$SOUNDS_DIR/session_start.aiff"    "At your service."
+    prompt_and_generate "session_end"      "$SOUNDS_DIR/session_end.aiff"      "Will that be all?"
+    prompt_and_generate "prompt_start"     "$SOUNDS_DIR/prompt_start.aiff"     "Right away."
+    prompt_and_generate "stop"             "$SOUNDS_DIR/stop.aiff"             "Over to you."
+    echo ""
+    echo "Attention and permissions:"
+    prompt_and_generate "attention"        "$SOUNDS_DIR/attention.aiff"        "Pardon the interruption."
+    prompt_and_generate "permission"       "$SOUNDS_DIR/permission.aiff"       "I'll need your approval."
+    echo ""
+    echo "Errors and warnings:"
+    prompt_and_generate "error"            "$SOUNDS_DIR/error.aiff"            "Something went wrong."
+    prompt_and_generate "context_warning"  "$SOUNDS_DIR/context_warning.aiff"  "Running low on memory."
+    echo ""
+    echo "Subagents:"
+    prompt_and_generate "subagent_start"   "$SOUNDS_DIR/subagent_start.aiff"   "Dispatching an assistant."
+    prompt_and_generate "subagent_stop"    "$SOUNDS_DIR/subagent_stop.aiff"    "Assistant has returned."
     echo ""
     echo "Tool sounds (what to say when Claude uses each tool):"
     prompt_and_generate "Bash"          "$TOOLS_DIR/bash.aiff"           "Running command."
@@ -201,10 +213,16 @@ manifest=$(jq -n \
     --arg desc "Custom TTS pack ($VOICE voice)" \
     --argjson session_start "$(build_sound_array "$SOUNDS_DIR" "sounds/" "session_start")" \
     --argjson session_end "$(build_sound_array "$SOUNDS_DIR" "sounds/" "session_end")" \
+    --argjson prompt_start "$(build_sound_array "$SOUNDS_DIR" "sounds/" "prompt_start")" \
+    --argjson stop "$(build_sound_array "$SOUNDS_DIR" "sounds/" "stop")" \
     --argjson attention "$(build_sound_array "$SOUNDS_DIR" "sounds/" "attention")" \
+    --argjson permission "$(build_sound_array "$SOUNDS_DIR" "sounds/" "permission")" \
     --argjson error "$(build_sound_array "$SOUNDS_DIR" "sounds/" "error")" \
+    --argjson context_warning "$(build_sound_array "$SOUNDS_DIR" "sounds/" "context_warning")" \
     --argjson tool_start "$(build_sound_array "$SOUNDS_DIR" "sounds/" "tool_start")" \
     --argjson tool_end "$(build_sound_array "$SOUNDS_DIR" "sounds/" "tool_end")" \
+    --argjson subagent_start "$(build_sound_array "$SOUNDS_DIR" "sounds/" "subagent_start")" \
+    --argjson subagent_stop "$(build_sound_array "$SOUNDS_DIR" "sounds/" "subagent_stop")" \
     --argjson bash "$(build_sound_array "$TOOLS_DIR" "sounds/tools/" "bash")" \
     --argjson read "$(build_sound_array "$TOOLS_DIR" "sounds/tools/" "read")" \
     --argjson write "$(build_sound_array "$TOOLS_DIR" "sounds/tools/" "write")" \
@@ -219,10 +237,16 @@ manifest=$(jq -n \
             {}
             + (if $session_start != null then {session_start: $session_start} else {} end)
             + (if $session_end != null then {session_end: $session_end} else {} end)
+            + (if $prompt_start != null then {prompt_start: $prompt_start} else {} end)
+            + (if $stop != null then {stop: $stop} else {} end)
             + (if $attention != null then {attention: $attention} else {} end)
+            + (if $permission != null then {permission: $permission} else {} end)
             + (if $error != null then {error: $error} else {} end)
+            + (if $context_warning != null then {context_warning: $context_warning} else {} end)
             + (if $tool_start != null then {tool_start: $tool_start} else {} end)
             + (if $tool_end != null then {tool_end: $tool_end} else {} end)
+            + (if $subagent_start != null then {subagent_start: $subagent_start} else {} end)
+            + (if $subagent_stop != null then {subagent_stop: $subagent_stop} else {} end)
             + {tools: (
                 {}
                 + (if $bash != null then {Bash: $bash} else {} end)

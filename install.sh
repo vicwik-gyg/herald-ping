@@ -3,7 +3,7 @@
 #
 # This script:
 #   1. Generates default sounds if missing
-#   2. Patches ~/.claude/settings.json to register hooks
+#   2. Patches ~/.claude/settings.json to register hooks for all events
 #
 # Usage:
 #   ./install.sh              # Install with defaults
@@ -19,17 +19,9 @@ VOICE="Daniel"
 # --- Parse args ---
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --voice)
-            VOICE="$2"
-            shift 2
-            ;;
-        --uninstall)
-            exec "$HERALD_DIR/uninstall.sh"
-            ;;
-        *)
-            echo "Unknown option: $1"
-            exit 1
-            ;;
+        --voice) VOICE="$2"; shift 2 ;;
+        --uninstall) exec "$HERALD_DIR/uninstall.sh" ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
 
@@ -42,6 +34,7 @@ echo ""
 # --- Make scripts executable ---
 chmod +x "$HERALD_DIR/herald.sh"
 chmod +x "$HERALD_DIR/uninstall.sh"
+chmod +x "$HERALD_DIR/create-pack.sh"
 chmod +x "$HERALD_DIR/packs/default/generate.sh"
 
 # --- Generate default sounds if missing ---
@@ -63,40 +56,38 @@ echo "Patching $SETTINGS_FILE..."
 # Back up settings
 cp "$SETTINGS_FILE" "$SETTINGS_FILE.herald-backup"
 
-# Register herald.sh for each hook event type
+# Register herald.sh for every Claude Code hook event
 HERALD_SCRIPT="$HERALD_DIR/herald.sh"
 
-jq --arg script "$HERALD_SCRIPT" '
-  # Ensure hooks object exists
-  .hooks //= {} |
+# All hook events we register for
+HOOK_EVENTS=(
+    "SessionStart"
+    "SessionEnd"
+    "UserPromptSubmit"
+    "Notification"
+    "PreToolUse"
+    "PostToolUse"
+    "PostToolUseFailure"
+    "Stop"
+    "PreCompact"
+    "SubagentStart"
+    "SubagentStop"
+)
 
-  # SessionStart hook
-  .hooks.SessionStart = (
-    [(.hooks.SessionStart // [])[] | select(.hooks[0].command | test("herald\\.sh") | not)] +
-    [{"hooks": [{"type": "command", "command": ("CLAUDE_HOOK_EVENT=SessionStart " + $script)}]}]
-  ) |
+# Build jq filter dynamically for all events
+jq_filter='.hooks //= {}'
+for event in "${HOOK_EVENTS[@]}"; do
+    jq_filter+=" | .hooks.${event} = (
+        [(.hooks.${event} // [])[] | select(.hooks[0].command | test(\"herald\\\\.sh\") | not)] +
+        [{\"hooks\": [{\"type\": \"command\", \"command\": (\"CLAUDE_HOOK_EVENT=${event} \" + \$script)}]}]
+    )"
+done
 
-  # SessionEnd hook
-  .hooks.SessionEnd = (
-    [(.hooks.SessionEnd // [])[] | select(.hooks[0].command | test("herald\\.sh") | not)] +
-    [{"hooks": [{"type": "command", "command": ("CLAUDE_HOOK_EVENT=SessionEnd " + $script)}]}]
-  ) |
-
-  # PreToolUse - all tools (tool-specific sounds + attention for AskUserQuestion)
-  .hooks.PreToolUse = (
-    [(.hooks.PreToolUse // [])[] | select(.hooks[0].command | test("herald\\.sh") | not)] +
-    [{"hooks": [{"type": "command", "command": ("CLAUDE_HOOK_EVENT=PreToolUse " + $script)}]}]
-  ) |
-
-  # PostToolUse - all tools (completion/error)
-  .hooks.PostToolUse = (
-    [(.hooks.PostToolUse // [])[] | select(.hooks[0].command | test("herald\\.sh") | not)] +
-    [{"hooks": [{"type": "command", "command": ("CLAUDE_HOOK_EVENT=PostToolUse " + $script)}]}]
-  )
-' "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
+jq --arg script "$HERALD_SCRIPT" "$jq_filter" "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
 
 echo ""
 echo "herald-ping installed successfully."
+echo "Registered for ${#HOOK_EVENTS[@]} hook events."
 echo ""
 echo "Enabled events (edit $HERALD_DIR/config.json to change):"
 jq -r '.events | to_entries[] | "  " + .key + ": " + (if .value then "ON" else "OFF" end)' "$HERALD_DIR/config.json"

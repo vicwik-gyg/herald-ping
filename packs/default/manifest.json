@@ -4,10 +4,16 @@
   "sounds": {
     "session_start": ["sounds/session_start.aiff"],
     "session_end": ["sounds/session_end.aiff"],
+    "prompt_start": ["sounds/prompt_start.aiff"],
+    "stop": ["sounds/stop.aiff"],
     "attention": ["sounds/attention.aiff"],
+    "permission": ["sounds/permission.aiff"],
     "error": ["sounds/error.aiff"],
+    "context_warning": ["sounds/context_warning.aiff"],
     "tool_start": ["sounds/tool_start.aiff"],
     "tool_end": ["sounds/tool_end.aiff"],
+    "subagent_start": ["sounds/subagent_start.aiff"],
+    "subagent_stop": ["sounds/subagent_stop.aiff"],
     "tools": {
       "Bash": ["sounds/tools/bash.aiff"],
       "Read": ["sounds/tools/read.aiff"],

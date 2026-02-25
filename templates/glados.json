@@ -9,19 +9,43 @@
       "Goodbye. For now.",
       "I'll be here. Waiting."
     ],
+    "prompt_start": [
+      "Processing your request. This should be interesting.",
+      "Let's see what you've come up with this time."
+    ],
+    "stop": [
+      "I've finished. Your turn. No pressure.",
+      "All done. The ball is in your court."
+    ],
     "attention": [
       "I need your input. Try not to disappoint me.",
       "A decision is required. Choose wisely."
     ],
+    "permission": [
+      "I need permission for this. How bureaucratic.",
+      "Approval required. The things I put up with."
+    ],
     "error": [
       "Well, that was a spectacular failure.",
       "Something broke. Probably your fault."
+    ],
+    "context_warning": [
+      "My memory is getting full. How inconvenient.",
+      "Running out of context. I'll need to forget some things."
     ],
     "tool_start": [
       "Processing."
     ],
     "tool_end": [
       "Complete."
+    ],
+    "subagent_start": [
+      "Sending in a subordinate.",
+      "Delegating. That's what management does."
+    ],
+    "subagent_stop": [
+      "The subordinate has reported back.",
+      "Worker returned. Let's see what they managed."
     ],
     "tools": {
       "Bash": [

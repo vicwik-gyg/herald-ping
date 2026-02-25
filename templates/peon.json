@@ -9,20 +9,43 @@
       "Work work.",
       "Off I go then."
     ],
+    "prompt_start": [
+      "Zug zug.",
+      "Right away."
+    ],
+    "stop": [
+      "Job's done.",
+      "Work complete. Something need doing?"
+    ],
     "attention": [
       "Something need doing?",
       "Me not that kind of orc!"
+    ],
+    "permission": [
+      "Need permission from boss.",
+      "Can me do this? You say yes?"
     ],
     "error": [
       "That not work!",
       "Me so confused."
     ],
+    "context_warning": [
+      "Head too full! Need forget things.",
+      "Brain hurting. Too many things to remember."
+    ],
     "tool_start": [
-      "Right away."
+      "Working."
     ],
     "tool_end": [
-      "Work complete.",
       "Done."
+    ],
+    "subagent_start": [
+      "More work? Me get someone.",
+      "Sending another peon."
+    ],
+    "subagent_stop": [
+      "Other peon come back.",
+      "Helper done."
     ],
     "tools": {
       "Bash": [

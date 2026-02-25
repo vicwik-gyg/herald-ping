@@ -180,17 +180,17 @@ if [ ! -f "$sound_path" ]; then
     exit 0
 fi
 
-# --- Kill previous sound before playing new one ---
+# --- Skip if a sound is already playing ---
 PID_FILE="$HERALD_DIR/.sound.pid"
 if [ -f "$PID_FILE" ]; then
     old_pid=$(cat "$PID_FILE" 2>/dev/null)
     if [ -n "$old_pid" ] && kill -0 "$old_pid" 2>/dev/null; then
-        kill "$old_pid" 2>/dev/null
-        wait "$old_pid" 2>/dev/null
+        # Previous sound still playing -- let it finish, skip this one
+        exit 0
     fi
 fi
 
-# --- Play sound (non-blocking, no overlap) ---
+# --- Play sound (non-blocking) ---
 if command -v afplay &>/dev/null; then
     afplay_vol=$(echo "$volume * 255" | bc 2>/dev/null | cut -d. -f1)
     afplay_vol="${afplay_vol:-128}"

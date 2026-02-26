@@ -63,6 +63,9 @@
       "Task": [
         "sounds/tools/task.wav"
       ]
-    }
+    },
+    "_alt": [
+      "sounds/_alt.wav"
+    ]
   }
 }

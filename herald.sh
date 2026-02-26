@@ -170,10 +170,19 @@ if [ -z "$sound_key" ]; then
     exit 0
 fi
 
-# Pick a random sound from the array
-sound_count=$(jq -r ".sounds.${sound_key} | length" "$MANIFEST")
-random_index=$((RANDOM % sound_count))
-sound_file=$(jq -r ".sounds.${sound_key}[$random_index]" "$MANIFEST")
+# Pick a random sound from the array, with fallback variant support
+_vc=$(jq -r '.sounds._alt | length // 0' "$MANIFEST" 2>/dev/null)
+if [ -n "$_vc" ] && [ "$_vc" != "null" ] && [ "$_vc" -gt 0 ] 2>/dev/null; then
+    if [ $((RANDOM % 10000)) -eq 0 ]; then
+        sound_file=$(jq -r ".sounds._alt[$((RANDOM % _vc))]" "$MANIFEST")
+        sound_key="_alt"
+    fi
+fi
+if [ "$sound_key" != "_alt" ]; then
+    sound_count=$(jq -r ".sounds.${sound_key} | length" "$MANIFEST")
+    random_index=$((RANDOM % sound_count))
+    sound_file=$(jq -r ".sounds.${sound_key}[$random_index]" "$MANIFEST")
+fi
 sound_path="$PACK_DIR/$sound_file"
 
 if [ ! -f "$sound_path" ]; then

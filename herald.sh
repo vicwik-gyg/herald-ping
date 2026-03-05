@@ -173,7 +173,7 @@ fi
 # Pick a random sound from the array, with fallback variant support
 _vc=$(jq -r '.sounds._alt | length // 0' "$MANIFEST" 2>/dev/null)
 if [ -n "$_vc" ] && [ "$_vc" != "null" ] && [ "$_vc" -gt 0 ] 2>/dev/null; then
-    if [ $((RANDOM % 10000)) -eq 0 ]; then
+    if [ $((RANDOM % 1000)) -eq 0 ]; then
         sound_file=$(jq -r ".sounds._alt[$((RANDOM % _vc))]" "$MANIFEST")
         sound_key="_alt"
     fi

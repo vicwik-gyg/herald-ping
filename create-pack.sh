@@ -33,7 +33,7 @@ HERALD_DIR="$(cd "$(dirname "$0")" && pwd)"
 PACK_NAME="${1:?Usage: ./create-pack.sh <pack-name> [--voice Voice] [--from template.json]}"
 shift
 
-VOICE="Daniel"
+VOICE="Samantha"
 TEMPLATE=""
 
 while [[ $# -gt 0 ]]; do

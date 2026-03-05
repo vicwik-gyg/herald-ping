@@ -16,7 +16,17 @@ Optional:
 ## Install
 
 ```bash
-git clone https://github.com/vicwik/herald-ping.git ~/git/herald-ping
+mkdir -p ~/git
+git clone git@github.com:vicwik-gyg/herald-ping.git ~/git/herald-ping
+cd ~/git/herald-ping
+./install.sh
+```
+
+Or via HTTPS:
+
+```bash
+mkdir -p ~/git
+git clone https://github.com/vicwik-gyg/herald-ping.git ~/git/herald-ping
 cd ~/git/herald-ping
 ./install.sh
 ```
@@ -87,7 +97,8 @@ Edit `config.json`:
 {
   "enabled": true,
   "volume": 0.5,
-  "active_pack": "default",
+  "active_pack": "vicwik",
+  "skip_when_focused": true,
   "events": {
     "session_start": true,
     "session_end": true,
@@ -107,6 +118,7 @@ Edit `config.json`:
 
 - **volume** — 0.0 to 1.0
 - **active_pack** — Name of the sound pack directory under `packs/`
+- **skip_when_focused** — When `true` (default), sounds are suppressed if your terminal (Terminal.app or iTerm2) is the frontmost application. Sounds only play when you're in another window.
 - **events** — Toggle categories on/off. Tool-specific sounds require their parent category enabled (e.g., `Bash` needs `tool_start: true`)
 
 ### Switch the active pack

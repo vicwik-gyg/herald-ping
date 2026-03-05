@@ -14,7 +14,7 @@ set -e
 
 HERALD_DIR="$(cd "$(dirname "$0")" && pwd)"
 SETTINGS_FILE="${CLAUDE_SETTINGS_FILE:-$HOME/.claude/settings.json}"
-VOICE="Daniel"
+VOICE="Samantha"
 
 # --- Parse args ---
 while [[ $# -gt 0 ]]; do

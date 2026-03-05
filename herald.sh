@@ -49,6 +49,15 @@ fi
 volume=$(jq -r '.volume // 0.5' "$CONFIG_FILE")
 active_pack=$(jq -r '.active_pack // "default"' "$CONFIG_FILE")
 
+# --- Skip if terminal is focused ---
+skip_focused=$(jq -r '.skip_when_focused // true' "$CONFIG_FILE")
+if [ "$skip_focused" = "true" ]; then
+    frontmost=$(osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true' 2>/dev/null)
+    if echo "$frontmost" | grep -qE '^(Terminal|iTerm2?)$'; then
+        exit 0
+    fi
+fi
+
 # --- Parse hook input and resolve event + tool_name ---
 resolve_event() {
     if [ -n "$HERALD_EVENT" ]; then
